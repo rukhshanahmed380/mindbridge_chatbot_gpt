@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>MindBridge Campus Support AI</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <h1>Campus Support</h1>
+    </div>
+  </header>
+
+  <div class="layout">
+    <aside class="sidebar">
+      <h2>MindBridge</h2>
+      <p class="subtitle">Campus Support AI</p>
+      <div class="section">
+        <h3>Topics</h3>
+        <ul>
+          <li>🧠 Mental Health</li>
+          <li>📚 Academic Stress</li>
+          <li>💰 Financial Aid</li>
+          <li>🏫 Campus Resources</li>
+          <li>🚨 Crisis Support</li>
+          <li>💬 Counseling</li>
+          <li>📝 Exam Anxiety</li>
+        </ul>
+      </div>
+      <div class="section">
+        <h3>Risk Levels</h3>
+        <ul class="risk">
+          <li class="normal">L0 Normal</li>
+          <li class="stress">L1 Stress</li>
+          <li class="distress">L2 Distress</li>
+          <li class="crisis">L3 Crisis</li>
+        </ul>
+      </div>
+    </aside>
+
+    <main class="chat-container">
+      <div class="chat-main">
+        <div class="chat-header">
+          <span class="status">🟢 Online</span>
+        </div>
+
+        <div id="chat" class="chat-box"></div>
+
+        <form id="form" class="chat-input">
+          <div class="input-wrap">
+            <input type="text" id="query" placeholder="Write a message..." required>
+            <button type="submit">Send</button>
+          </div>
+        </form>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    const chat = document.getElementById("chat");
+    const form = document.getElementById("form");
+    const input = document.getElementById("query");
+    const submitBtn = form.querySelector('button[type="submit"]');
+
+    const riskLabelMap = {
+      L0_NORMAL: "L0 Normal",
+      L1_STRESS: "L1 Stress",
+      L2_DISTRESS: "L2 Distress",
+      L3_CRISIS: "L3 Crisis"
+    };
+
+    const riskClassMap = {
+      L0_NORMAL: "risk-l0",
+      L1_STRESS: "risk-l1",
+      L2_DISTRESS: "risk-l2",
+      L3_CRISIS: "risk-l3"
+    };
+
+    function createBotMessage(answer, riskLevel) {
+      const botMsg = document.createElement('div');
+      botMsg.className = 'msg bot';
+
+      const safeRisk = (riskLevel || 'L0_NORMAL').toString().trim().toUpperCase();
+      const riskLabel = riskLabelMap[safeRisk] || safeRisk;
+      const riskClass = riskClassMap[safeRisk] || 'risk-l0';
+
+      botMsg.innerHTML = `
+        <span class="meta">MindBridge:</span>
+        <div class="bot-answer">${answer}</div>
+        <div class="risk-badge ${riskClass}">${riskLabel}</div>
+      `;
+
+      return botMsg;
+    }
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const query = input.value.trim();
+      if (!query) return;
+
+      // show user message
+      const userMsg = document.createElement('div');
+      userMsg.className = 'msg user';
+      userMsg.innerHTML = `<span class="meta">You:</span> ${query}`;
+      chat.appendChild(userMsg);
+      chat.scrollTop = chat.scrollHeight;
+      input.value = "";
+
+      // create loading indicator message
+      const loadingMsg = document.createElement('div');
+      loadingMsg.className = 'msg bot loading';
+      loadingMsg.innerHTML = `<span class="meta">MindBridge:</span><div class="dot-loader"><span></span><span></span><span></span></div>`;
+      chat.appendChild(loadingMsg);
+      chat.scrollTop = chat.scrollHeight;
+
+      // disable input while waiting
+      input.disabled = true;
+      submitBtn.disabled = true;
+
+      try {
+        const res = await fetch("/ask", {
+          method: "POST",
+          headers: { "Content-Type": "application/x-www-form-urlencoded" },
+          body: "query=" + encodeURIComponent(query)
+        });
+        const data = await res.json();
+
+        // remove loading and append bot response
+        loadingMsg.remove();
+        chat.appendChild(createBotMessage(data.answer, data.risk_level));
+        chat.scrollTop = chat.scrollHeight;
+      } catch (err) {
+        loadingMsg.remove();
+        chat.appendChild(createBotMessage('Sorry, something went wrong.', 'L0_NORMAL'));
+        chat.scrollTop = chat.scrollHeight;
+      } finally {
+        input.disabled = false;
+        submitBtn.disabled = false;
+        input.focus();
+      }
+    });
+  </script>
+</body>
+</html>
