@@ -2,7 +2,6 @@
 
 MindBridge is a safety-aware student support chatbot using retrieval-augmented generation (RAG) with OpenAI chat completions.
 
-## Project Overview
 
 - Loads support resources from a local CSV corpus
 - Detects risk level from user input (normal, stress, distress, crisis)
