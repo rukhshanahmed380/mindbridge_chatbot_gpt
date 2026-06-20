@@ -82,8 +82,4 @@ CLI commands:
 - Answers are intended to be grounded in the provided corpus
 - Crisis responses include stronger safety guidance
 
-## Security
 
-- Hardcoded OpenAI keys were removed from code and history
-- `.gitignore` now excludes `.venv`, `__pycache__`, and `.pyc` files
-- If an old key was exposed previously, revoke and rotate it in OpenAI dashboard
